@@ -1,25 +1,85 @@
-import { Trash2, Plus, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Sparkles, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+
+const reviewReports: Record<number, { totalHours: string }> = {
+  2026: { totalHours: '1,920시간' },
+  2025: { totalHours: '1,856시간' },
+  2024: { totalHours: '1,790시간' },
+};
+
+const availableYears = Object.keys(reviewReports)
+  .map(Number)
+  .sort((a, b) => b - a);
 
 export default function ReviewReportPage() {
   const [expandedTag, setExpandedTag] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState(availableYears[0]);
+  const currentReport = reviewReports[selectedYear];
 
   const toggleTag = (tagId: string) => {
     setExpandedTag(expandedTag === tagId ? null : tagId);
   };
 
+  const goToPrevYear = () => {
+    const idx = availableYears.indexOf(selectedYear);
+    if (idx < availableYears.length - 1) {
+      setSelectedYear(availableYears[idx + 1]);
+      setExpandedTag(null);
+    }
+  };
+
+  const goToNextYear = () => {
+    const idx = availableYears.indexOf(selectedYear);
+    if (idx > 0) {
+      setSelectedYear(availableYears[idx - 1]);
+      setExpandedTag(null);
+    }
+  };
+
+  const isOldestYear = availableYears.indexOf(selectedYear) === availableYears.length - 1;
+  const isNewestYear = availableYears.indexOf(selectedYear) === 0;
+
   return (
     <div className="p-6">
-      {/* Page Title and Action */}
-      <div className="mb-6 flex items-center justify-between">
+      {/* AI 성과 보고 자동 생성 배너 */}
+      <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">성과 보고 (리뷰)</h1>
-          <p className="text-sm text-gray-500 mt-1">기간별 성과를 확인하고 AI 요약을 검토하세요</p>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+            <Sparkles className="h-5 w-5 text-blue-600" />
+            AI 성과 보고 자동 생성
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            AI로 그동안의 성과를 요약한 보고를 생성해보세요
+          </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          <Plus className="w-4 h-4" />
-          <span>성과 보고 생성</span>
+        <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700">
+          <Sparkles className="h-4 w-4" />
+          AI로 생성하기
         </button>
+      </div>
+
+      {/* 작성된 성과 보고 섹션 헤더 */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900">작성된 성과 보고</h2>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={goToPrevYear}
+            disabled={isOldestYear}
+            className="p-1.5 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span className="text-sm font-semibold text-gray-800 min-w-[4rem] text-center">
+            {selectedYear}년
+          </span>
+          <button
+            onClick={goToNextYear}
+            disabled={isNewestYear}
+            className="p-1.5 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
       </div>
 
       {/* Review Report Card */}
@@ -27,8 +87,8 @@ export default function ReviewReportPage() {
         {/* Header with Period and Delete */}
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">2026-01-01 ~ 2026-12-31 (연간)</h2>
-            <p className="text-sm text-gray-500 mt-0.5">총 투입시간: 1,920시간</p>
+            <h2 className="text-base font-bold text-gray-900">{selectedYear}-01-01 ~ {selectedYear}-12-31 (연간)</h2>
+            <p className="text-sm text-gray-500 mt-0.5">총 투입시간: {currentReport.totalHours}</p>
           </div>
           <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded">
             <Trash2 className="w-4 h-4" />
@@ -220,16 +280,6 @@ export default function ReviewReportPage() {
         </table>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">성과 보고 생성 안내</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• 시작일/종료일을 지정하여 원하는 기간의 성과 보고를 생성할 수 있습니다</li>
-          <li>• AI가 월간 보고의 데이터를 바탕으로 태그별 요약을 자동 생성합니다 (500자 내외)</li>
-          <li>• 상세보기를 통해 개별 업무의 AI 요약과 어필할 성과를 확인할 수 있습니다</li>
-          <li>• 기간이 중복되는 성과 보고는 생성할 수 없습니다</li>
-        </ul>
-      </div>
     </div>
   );
 }

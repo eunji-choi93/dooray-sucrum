@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useTeam } from '../hooks/useTeam';
+import { useUserName } from '../hooks/useUserName';
+import NoTeamModal from './NoTeamModal';
 
 interface SidebarProps {
   currentPath: string;
@@ -22,8 +25,38 @@ interface SidebarProps {
 
 export function Sidebar({ currentPath }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showNoTeamModal, setShowNoTeamModal] = useState(false);
+  const { hasTeam, teamData } = useTeam();
+  const { userName } = useUserName();
 
   const isActive = (path: string) => currentPath === path;
+
+  // 팀 미소속 시 Link 대신 모달을 띄우는 메뉴 아이템
+  const MenuItem = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => {
+    const baseClass = `w-full px-4 py-2 text-sm flex items-center justify-between`;
+    const activeClass = isActive(to) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50';
+
+    if (!hasTeam) {
+      return (
+        <button onClick={() => setShowNoTeamModal(true)} className={`${baseClass} ${activeClass}`}>
+          <div className="flex items-center gap-2">
+            {icon}
+            <span>{label}</span>
+          </div>
+        </button>
+      );
+    }
+
+    return (
+      <Link to={to} className={`${baseClass} ${activeClass}`}>
+        <div className="flex items-center gap-2">
+          {icon}
+          <span>{label}</span>
+        </div>
+        {isActive(to) && <ChevronRight className="w-4 h-4" />}
+      </Link>
+    );
+  };
 
   return (
     <div className="flex h-full bg-white border-r border-gray-200">
@@ -69,22 +102,35 @@ export function Sidebar({ currentPath }: SidebarProps) {
       {isExpanded && (
         <div className="w-56 bg-white flex flex-col">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">FE파트</h2>
+          <div className="px-4 py-3 border-b border-gray-200">
+            <p className="font-semibold text-gray-900">{userName}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              소속된 팀: {hasTeam ? teamData?.name : '없음'}
+            </p>
           </div>
 
           {/* Daily Scrum Button */}
           <div className="px-3 py-3 border-b border-gray-200">
-            <Link to="/">
-              <button className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded ${
-                isActive('/') 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}>
+            {hasTeam ? (
+              <Link to="/">
+                <button className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded ${
+                  isActive('/')
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}>
+                  <Edit className="w-4 h-4" />
+                  <span className="text-sm font-medium">데일리 슈크럼 작성</span>
+                </button>
+              </Link>
+            ) : (
+              <button
+                onClick={() => setShowNoTeamModal(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
                 <Edit className="w-4 h-4" />
                 <span className="text-sm font-medium">데일리 슈크럼 작성</span>
               </button>
-            </Link>
+            )}
           </div>
 
           {/* Menu Items */}
@@ -93,62 +139,10 @@ export function Sidebar({ currentPath }: SidebarProps) {
             <div className="mb-3">
               <div className="px-4 py-1.5 text-xs text-gray-500 font-medium">내 업무 보고</div>
               <nav className="space-y-0.5">
-                <Link 
-                  to="/reports/daily"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/reports/daily')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>데일리 보고</span>
-                  </div>
-                  {isActive('/reports/daily') && <ChevronRight className="w-4 h-4" />}
-                </Link>
-                <Link 
-                  to="/reports/weekly"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/reports/weekly')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>주간 보고</span>
-                  </div>
-                  {isActive('/reports/weekly') && <ChevronRight className="w-4 h-4" />}
-                </Link>
-                <Link 
-                  to="/reports/monthly"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/reports/monthly')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>월간 보고(GRM)</span>
-                  </div>
-                  {isActive('/reports/monthly') && <ChevronRight className="w-4 h-4" />}
-                </Link>
-                <Link 
-                  to="/reports/review"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/reports/review')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4" />
-                    <span>성과 공유</span>
-                  </div>
-                  {isActive('/reports/review') && <ChevronRight className="w-4 h-4" />}
-                </Link>
+                <MenuItem to="/reports/daily" icon={<FileText className="w-4 h-4" />} label="데일리 보고" />
+                <MenuItem to="/reports/weekly" icon={<FileText className="w-4 h-4" />} label="주간 보고" />
+                <MenuItem to="/reports/monthly" icon={<FileText className="w-4 h-4" />} label="월간 보고(GRM)" />
+                <MenuItem to="/reports/review" icon={<Star className="w-4 h-4" />} label="성과 공유" />
               </nav>
             </div>
 
@@ -156,34 +150,8 @@ export function Sidebar({ currentPath }: SidebarProps) {
             <div className="mb-3">
               <div className="px-4 py-1.5 text-xs text-gray-500 font-medium">팀 업무 보고</div>
               <nav className="space-y-0.5">
-                <Link
-                  to="/team/daily"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/team/daily')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>데일리 보고</span>
-                  </div>
-                  {isActive('/team/daily') && <ChevronRight className="w-4 h-4" />}
-                </Link>
-                <Link
-                  to="/team/weekly"
-                  className={`w-full px-4 py-2 text-sm flex items-center justify-between ${
-                    isActive('/team/weekly')
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    <span>주간 보고</span>
-                  </div>
-                  {isActive('/team/weekly') && <ChevronRight className="w-4 h-4" />}
-                </Link>
+                <MenuItem to="/team/daily" icon={<FileText className="w-4 h-4" />} label="데일리 보고" />
+                <MenuItem to="/team/weekly" icon={<FileText className="w-4 h-4" />} label="주간 보고" />
               </nav>
             </div>
 
@@ -207,6 +175,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
           </div>
         </div>
       )}
+      {showNoTeamModal && <NoTeamModal onClose={() => setShowNoTeamModal(false)} />}
     </div>
   );
 }
