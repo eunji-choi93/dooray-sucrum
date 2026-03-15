@@ -16,7 +16,7 @@ const INITIAL_FORM: ScrumFormData = {
   title: '',
   hours: '',
   weeklyTag: '',
-  monthlyTag: '',
+  monthlyTag: MONTHLY_TAG_OPTIONS[0].value,
   todayWork: '',
   tomorrowWork: '',
   achievement: '',
@@ -47,6 +47,7 @@ export default function ScrumEntryForm({ onSubmit, initialData, isEditMode }: Sc
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [monthlyTagLocked] = useState(true);
 
   const updateField = <K extends keyof ScrumFormData>(key: K, value: ScrumFormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -66,6 +67,8 @@ export default function ScrumEntryForm({ onSubmit, initialData, isEditMode }: Sc
       newErrors.hours = '투입시간을 선택하세요';
     }
     if (!form.weeklyTag) newErrors.weeklyTag = '주간 태그를 선택하세요';
+    if (!form.todayWork.trim()) newErrors.todayWork = '오늘 한 일을 입력하세요';
+    if (!form.tomorrowWork.trim()) newErrors.tomorrowWork = '내일 할 일을 입력하세요';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -149,7 +152,10 @@ export default function ScrumEntryForm({ onSubmit, initialData, isEditMode }: Sc
           <select
             value={form.monthlyTag}
             onChange={(e) => updateField('monthlyTag', e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm"
+            disabled={monthlyTagLocked}
+            className={`w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm ${
+              monthlyTagLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+            }`}
           >
             <option value="">선택</option>
             {MONTHLY_TAG_OPTIONS.map((opt) => (
@@ -163,26 +169,36 @@ export default function ScrumEntryForm({ onSubmit, initialData, isEditMode }: Sc
 
       {/* 오늘 한 일 */}
       <div>
-        <label className="block text-sm font-bold text-gray-900 mb-1">오늘 한 일</label>
+        <label className="block text-sm font-bold text-gray-900 mb-1">
+          오늘 한 일 <span className="text-red-500">*</span>
+        </label>
         <textarea
           placeholder="오늘 한 일을 입력하세요"
           rows={3}
           value={form.todayWork}
           onChange={(e) => updateField('todayWork', e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm resize-none"
+          className={`w-full px-3 py-2.5 border rounded-lg text-sm resize-none ${
+            errors.todayWork ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
+        {errors.todayWork && <p className="text-xs text-red-500 mt-1">{errors.todayWork}</p>}
       </div>
 
       {/* 내일 할 일 */}
       <div>
-        <label className="block text-sm font-bold text-gray-900 mb-1">내일 할 일</label>
+        <label className="block text-sm font-bold text-gray-900 mb-1">
+          내일 할 일 <span className="text-red-500">*</span>
+        </label>
         <textarea
           placeholder="내일 할 일을 입력하세요"
           rows={3}
           value={form.tomorrowWork}
           onChange={(e) => updateField('tomorrowWork', e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm resize-none"
+          className={`w-full px-3 py-2.5 border rounded-lg text-sm resize-none ${
+            errors.tomorrowWork ? 'border-red-400' : 'border-gray-300'
+          }`}
         />
+        {errors.tomorrowWork && <p className="text-xs text-red-500 mt-1">{errors.tomorrowWork}</p>}
       </div>
 
       {/* 어필할 성과 */}
